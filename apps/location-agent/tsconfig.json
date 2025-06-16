@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../../packages/types" },
+    { "path": "../../packages/config" },
+    { "path": "../../packages/mcp-tools" }
+  ]
+}

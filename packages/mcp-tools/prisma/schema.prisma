@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model InventoryLocation {
+  id                                String   @id @default(cuid())
+  
+  // Basic location identifiers
+  divNbr                           String   @map("DIV_NBR")
+  divNmCdNbr                       String   @map("DIV_NM_CD_NBR")
+  brnchCd                          String   @map("BRNCH_CD")
+  warehouseLocn                    String   @map("WAREHOUSE_LOCN")
+  
+  // Extract metadata
+  dateExtract                      String   @map("DATE_EXTRACT")
+  timeExtract                      String   @map("TIME_EXTRACT")
+  
+  // Physical location
+  areaId                           String   @map("AREA_ID")
+  aisle                            Int      @map("AISLE")
+  bay                              Int      @map("BAY")
+  levelNumber                      Int      @map("LEVEL_NUMBER")
+  zone                             String?  @map("ZONE")
+  
+  // Product information
+  productNumber                    String   @map("PRODUCT_NUMBER")
+  licensePlate                     String   @map("LICENSE_PLATE")
+  palletId                         String   @map("PALLET_ID")
+  palletStatus                     String   @map("PALLET_STATUS")
+  prodDesc                         String?  @map("PROD_DESC")
+  purchasePackSize                 String?  @map("PURCHASE_PACK_SIZE")
+  purchaseUom                      String?  @map("PURCHASE_UOM")
+  
+  // Inventory quantities
+  qtyAvailUnits                    Int      @map("QTY_AVAIL_UNITS")
+  qtyAvailEaches                   Int      @map("QTY_AVAIL_EACHES")
+  
+  // Inventory status
+  invyStatus                       String   @map("INVY_STATUS")
+  slotStatus                       String   @map("SLOT_STATUS")
+  
+  // Physical characteristics
+  rackType                         String   @map("RACK_TYPE")
+  slotType                         String   @map("SLOT_TYPE")
+  floatCode                        String   @map("FLOAT_CODE")
+  
+  // Space utilization
+  slotCube                         Float    @map("SLOT_CUBE")
+  availCubeRemaining               Float    @map("AVAIL_CUBE_REMAINING")
+  slotFacing                       Float    @map("SLOT_FACING")
+  slotDepth                        Float    @map("SLOT_DEPTH")
+  slotHeight                       Float    @map("SLOT_HEIGHT")
+  whseTi                           String?  @map("WHSE_TI")
+  
+  // Product metadata
+  mfrProdNbr                       String?  @map("MFR_PROD_NBR")
+  buyerId                          String?  @map("BUYR_ID")
+  buyrNm                           String?  @map("BUYR_NM")
+  
+  // Dates
+  dateReceived                     String?  @map("DATE_RECEIVED")
+  expirationDate                   String?  @map("EXPIRATION_DATE")
+  daysRemainingAtTimeOfReceived    Int?     @map("DAYS_REMAINING_AT_TIME_OF_RECEIVED")
+  
+  // Timestamps
+  createdAt                        DateTime @default(now())
+  updatedAt                        DateTime @updatedAt
+  
+  @@index([productNumber])
+  @@index([areaId])
+  @@index([aisle, bay, levelNumber])
+  @@index([invyStatus])
+  @@index([expirationDate])
+  @@index([divNbr, warehouseLocn])
+  @@map("inventory_locations")
+}

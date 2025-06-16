@@ -1,0 +1,25 @@
+{
+  "name": "location-agent",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "test": "jest",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "mcp-tools": "*",
+    "winston": "^3.11.0",
+    "zod": "^3.22.4",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/uuid": "^9.0.7",
+    "tsx": "^4.6.0"
+  }
+}

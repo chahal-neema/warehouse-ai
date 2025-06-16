@@ -1,0 +1,22 @@
+{
+  "name": "config",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^4.7.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "tsx": "^4.6.0"
+  }
+}

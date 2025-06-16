@@ -1,0 +1,43 @@
+{
+  "name": "warehouse-ai",
+  "version": "0.1.0",
+  "description": "Multi-agent warehouse AI system using A2A and MCP protocols",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npx turbo run build",
+    "dev": "npx turbo run dev --parallel",
+    "dev:orchestrator": "npm run dev --workspace=apps/orchestrator",
+    "dev:location-agent": "npm run dev --workspace=apps/location-agent",
+    "dev:mcp-tools": "npm run dev --workspace=packages/mcp-tools",
+    "test": "npx turbo run test",
+    "test:orchestrator": "npm run test --workspace=apps/orchestrator",
+    "test:location-agent": "npm run test --workspace=apps/location-agent",
+    "test:mcp-tools": "npm run test --workspace=packages/mcp-tools",
+    "test:integration": "jest --config=jest.integration.config.js",
+    "type-check": "npx turbo run type-check",
+    "lint": "npx turbo run lint",
+    "db:migrate": "npm run db:migrate --workspace=packages/mcp-tools",
+    "db:seed": "npm run db:seed --workspace=packages/mcp-tools",
+    "db:studio": "npm run db:studio --workspace=packages/mcp-tools",
+    "clean": "npx turbo run clean"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "turbo": "^1.11.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.8",
+    "ts-jest": "^29.1.1",
+    "eslint": "^8.55.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
