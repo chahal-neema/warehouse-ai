@@ -11,6 +11,7 @@ import helmet from 'helmet'
 import Anthropic from '@anthropic-ai/sdk'
 import { locationAgent } from '../../location-agent/src/server'
 import { AgentRegistry } from './registry/AgentRegistry.js'
+import { classifyQueryLLM } from './nlp/query-router.js'
 
 // Types for A2A messaging (mock since a2a-sdk not available)
 interface A2AMessage {
@@ -415,135 +416,7 @@ class WarehouseAIOrchestrator {
   }
 
   private async classifyQuery(query: string, context: ConversationContext): Promise<QueryClassification> {
-    // In test mode or without Claude API, use rule-based classification
-    if (process.env.NODE_ENV === 'test' || !process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY === 'dummy-key-for-test') {
-      return this.fallbackClassification(query, context)
-    }
-    
-    try {
-      // Get dynamic agent capabilities from registry
-      const agentCapabilities = this.agentRegistry.generatePromptContext()
-      
-      const systemPrompt = `You are an expert warehouse management query classifier for a real-time inventory system with 21,425+ records.
-
-${agentCapabilities}
-
-QUERY CLASSIFICATION GUIDELINES:
-- "highest/most/top quantity" → intent: "inventory_ranking_analysis"
-- "compare areas/products" → intent: "comparative_analysis" 
-- "warehouse summary/overview" → intent: "comprehensive_summary"
-- "where is product [ID]" → intent: "product_location_search"
-- "explain/how do you" → intent: "system_explanation"
-- Specific product numbers (6+ digits) → intent: "specific_product_query"
-
-Respond with JSON only:
-{
-  "intent": "string",
-  "confidence": number (0-100),
-  "targetAgent": "location-agent-001",
-  "parameters": {...},
-  "complexity": "simple|moderate|complex", 
-  "reasoning": ["step1", "step2", "step3"]
-}`
-
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Claude API timeout')), 10000)
-      )
-      
-      const claudePromise = this.claude.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: `Query: "${query}"\n\nConversation context: ${JSON.stringify(context.context)}`
-          }
-        ]
-      })
-      
-      const response = await Promise.race([claudePromise, timeoutPromise]) as any
-
-      const content = response.content[0]
-      if (content.type !== 'text') {
-        throw new Error('Unexpected response type from Claude')
-      }
-
-      const classification = JSON.parse(content.text) as QueryClassification
-      
-      // Validate classification
-      if (!classification.intent || !classification.targetAgent) {
-        throw new Error('Invalid classification response')
-      }
-
-      return classification
-
-    } catch (error) {
-      console.error('❌ Query classification failed:', error)
-      
-      // Fallback classification
-      return this.fallbackClassification(query, context)
-    }
-  }
-
-  private fallbackClassification(query: string, context: ConversationContext): QueryClassification {
-    const lowerQuery = query.toLowerCase()
-    
-    // Rule-based classification for testing
-    if (lowerQuery.includes('highest') || lowerQuery.includes('most') || lowerQuery.includes('top') || lowerQuery.includes('pallets')) {
-      return {
-        intent: 'inventory_ranking_analysis',
-        confidence: 90,
-        targetAgent: 'location-agent-001',
-        parameters: { query },
-        complexity: 'moderate',
-        reasoning: ['Detected ranking/highest quantity query', 'Routing to location agent for analysis']
-      }
-    }
-    
-    if (lowerQuery.includes('where is') || lowerQuery.includes('location') || /\b\d{6,}\b/.test(query)) {
-      return {
-        intent: 'product_location_search',
-        confidence: 95,
-        targetAgent: 'location-agent-001',
-        parameters: { query },
-        complexity: 'simple',
-        reasoning: ['Detected product location query', 'Found product number or location keywords']
-      }
-    }
-    
-    if (lowerQuery.includes('how many') || lowerQuery.includes('count') || lowerQuery.includes('locations')) {
-      return {
-        intent: 'inventory_count_query',
-        confidence: 85,
-        targetAgent: 'location-agent-001',
-        parameters: { query },
-        complexity: 'simple',
-        reasoning: ['Detected count/quantity query', 'Routing to location agent']
-      }
-    }
-    
-    if (lowerQuery.includes('summary') || lowerQuery.includes('overview') || lowerQuery.includes('report')) {
-      return {
-        intent: 'comprehensive_summary',
-        confidence: 80,
-        targetAgent: 'location-agent-001',
-        parameters: { query },
-        complexity: 'complex',
-        reasoning: ['Detected summary request', 'Will use multiple tools for comprehensive analysis']
-      }
-    }
-    
-    // Default fallback
-    return {
-      intent: 'general_warehouse_query',
-      confidence: 70,
-      targetAgent: 'location-agent-001',
-      parameters: { query },
-      complexity: 'simple',
-      reasoning: ['General warehouse query', 'Using location agent as default']
-    }
+    return classifyQueryLLM(query, context.context, this.claude, this.agentRegistry)
   }
 
   private async routeToAgent(query: string, classification: QueryClassification, context: ConversationContext): Promise<A2AResponse> {
